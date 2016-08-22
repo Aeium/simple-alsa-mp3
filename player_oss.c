@@ -154,12 +154,20 @@ int main(int argc, char *argv[]) {
 	*/
 	
  
+	int once = 1;
 	
-	
-    while ((bytes_left >= 0) && (frame_size > 0)) {
+    while (once--){  //(bytes_left >= 0) && (frame_size > 0)) {
 
 	printf("2");
 	printf("stream_pos: %d \n", stream_pos);
+		int i;
+		for( i =0; i < frame_size; i++){
+			
+			printf("%x", *(stream_pos + i));
+			
+		}
+		
+		printf("\n");
         stream_pos += frame_size;
         bytes_left -= frame_size;
 		snd_pcm_writei(handle, (char*)sample_buf, frames);
