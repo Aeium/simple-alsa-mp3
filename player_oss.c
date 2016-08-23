@@ -64,6 +64,17 @@ int main(int argc, char *argv[]) {
     bytes_left = lseek(fd, 0, SEEK_END);    
     file_data = mmap(0, bytes_left, PROT_READ, MAP_PRIVATE, fd, 0);
     stream_pos = (unsigned char *) file_data;
+
+    /*
+    //quick hack to cut off image and meta junk
+    uint32_t head_check;
+   do{
+    	head_check = (stream_pos[0] << 24) | (stream_pos[1] << 16) | (stream_pos[2] << 8) |stream_pos[3];
+	stream_pos++;
+	bytes_left--;
+    }while((head_check & 0xfffa9240) != 0xfffa9240);
+    */
+
     bytes_left -= 100;
 	
 	  /* Open PCM device for playback. */
@@ -125,9 +136,19 @@ int main(int argc, char *argv[]) {
 	
 	out("Now Playing: ");
     out(argv[1]);
+    out("\n");
 
     mp3 = mp3_create();
-    frame_size = mp3_decode(mp3, stream_pos, bytes_left, sample_buf, &info);
+    int old_frame_size = 0;
+    do{
+    	frame_size = mp3_decode(mp3, stream_pos, bytes_left, sample_buf, &info);
+        if(frame_size == old_frame_size) break;
+	stream_pos += frame_size;
+        bytes_left -= frame_size;
+        old_frame_size = frame_size;
+        printf("frame_size: %d\n", frame_size);
+    }while(1 == 1);
+    
     if (!frame_size) {
         out("\nError: not a valid MP3 audio file!\n");
         return 1;
@@ -154,11 +175,11 @@ int main(int argc, char *argv[]) {
 	*/
 	
  
-	int once = 1;
+	int once = 4;
 	
-    while (once--){  //(bytes_left >= 0) && (frame_size > 0)) {
+    while ((bytes_left >= 0) && (frame_size > 0)) {
 
-	printf("2");
+	printf("\nframe size: %d\n", frame_size);
 	printf("stream_pos: %d \n", stream_pos);
 		int i;
 		for( i =0; i < frame_size; i++){
